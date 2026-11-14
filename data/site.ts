@@ -34,6 +34,7 @@ export function linkWhatsapp(mensagem: string): string {
 export const links = [
   { href: "#servicos", rotulo: "Serviços" },
   { href: "#equipe", rotulo: "Equipe" },
+  { href: "#estudio", rotulo: "Estúdio" },
   { href: "#inspiracoes", rotulo: "Inspirações" },
   { href: "#como-funciona", rotulo: "Como funciona" },
   { href: "#contato", rotulo: "Contato" },

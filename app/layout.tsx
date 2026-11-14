@@ -18,10 +18,47 @@ const inter = Inter({
   display: "swap",
 });
 
+const titulo = "Glow Icon | Eduarda Vieira, unhas com assinatura";
+const descricao =
+  "Glow Icon é o salão de Eduarda Vieira em Canaã dos Carajás: unhas em gel, fibra, tranças, cílios e sobrancelhas. Agende seu horário.";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  ? process.env.NEXT_PUBLIC_SITE_URL
+  : process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "Glow Icon | Eduarda Vieira, unhas com assinatura",
-  description:
-    "Glow Icon é o salão de Eduarda Vieira: unhas em gel, fibra, tranças, cílios e sobrancelhas. Agende seu horário.",
+  metadataBase: new URL(siteUrl),
+  title: titulo,
+  description: descricao,
+  applicationName: "Glow Icon",
+  authors: [{ name: "Eduarda Vieira" }],
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: "/",
+    siteName: "Glow Icon",
+    title: "Glow Icon — unhas com assinatura",
+    description: descricao,
+    images: [
+      {
+        url: "/og.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Glow Icon — Eduarda Vieira, unhas com assinatura. Canaã dos Carajás - PA.",
+        type: "image/jpeg",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Glow Icon — unhas com assinatura",
+    description: descricao,
+    images: ["/og.jpg"],
+  },
 };
 
 export const viewport: Viewport = {

@@ -14,7 +14,6 @@ import {
 import type { Servico } from "@/data/servicos";
 
 type Props = {
-  /** serviço já escolhido, se houver: ordena por nível e marca a recomendada */
   servico: Servico | null;
   selecionada: Profissional | null;
   onEscolher: (p: Profissional) => void;
@@ -29,15 +28,7 @@ function especialidadesDoCard(p: Profissional, servico: Servico | null): Especia
 }
 
 export default function ListaProfissionais({ servico, selecionada, onEscolher }: Props) {
-  const linhas = equipe
-    .map((p) => ({ p, nivel: servico ? nivelNoServico(p, servico.id) : 0 }))
-    .sort((a, b) => {
-      if (!servico) return 0;
-      return (
-        Number(b.nivel > 0) - Number(a.nivel > 0) || b.nivel - a.nivel || notaMedia(b.p) - notaMedia(a.p)
-      );
-    });
-  const recomendadaId = servico && linhas[0].nivel > 0 ? linhas[0].p.id : null;
+  const linhas = equipe.map((p) => ({ p, nivel: servico ? nivelNoServico(p, servico.id) : 0 }));
 
   return (
     <ul className="grid grid-cols-2 gap-3 p-1 -m-1">
@@ -65,11 +56,6 @@ export default function ListaProfissionais({ servico, selecionada, onEscolher }:
                   sizes="(min-width: 640px) 260px, 45vw"
                   className="object-cover"
                 />
-                {p.id === recomendadaId && (
-                  <span className="r-pill absolute left-2 top-2 max-w-[88%] bg-acento px-3 py-1.5 text-[11px] font-medium leading-tight text-acento-fg shadow-[var(--sombra-1)]">
-                    Recomendada para este serviço
-                  </span>
-                )}
               </span>
 
               <span className="flex flex-1 flex-col p-3 sm:p-4">

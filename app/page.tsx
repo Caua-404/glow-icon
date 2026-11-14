@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Servicos from "@/components/Servicos";
 import Equipe from "@/components/Equipe";
+import Estudio from "@/components/Estudio";
 import Inspiracoes from "@/components/Inspiracoes";
 import ComoFunciona from "@/components/ComoFunciona";
 import Contato from "@/components/Contato";
@@ -15,6 +16,7 @@ export default function Home() {
         <Hero />
         <Servicos />
         <Equipe />
+        <Estudio />
         <Inspiracoes />
         <ComoFunciona />
         <Contato />

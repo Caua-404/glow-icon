@@ -3,7 +3,17 @@
 
 import { nivelNoServico, profissionaisDoServico, type Profissional } from "@/data/equipe";
 import type { Regiao, Servico } from "@/data/servicos";
-import { BLOCOS, chaveDia, conflito, rotuloHora, type Dia, type Horario } from "./agenda";
+import {
+  BLOCOS,
+  FECHA,
+  aposAlmoco,
+  chaveDia,
+  conflito,
+  rotuloHora,
+  somarTrabalho,
+  type Dia,
+  type Horario,
+} from "./agenda";
 import type { Bloqueio } from "./bloqueios";
 
 export type ModoPacote = "sequencia" | "simultaneo";
@@ -15,17 +25,16 @@ export type Plano = {
   intervalos: Intervalo[];
   /** fim do último serviço */
   fim: number;
-  /** do início do primeiro ao fim do último */
+  /** minutos de trabalho (sem o almoço) */
   totalMin: number;
-  /** fim do bloco do expediente em que o horário começa (12:00 ou 18:00) */
+  /** fim do expediente (18:00) */
   limite: number;
 };
 
 export type Veredito = { ok: true; plano: Plano } | { ok: false; plano: Plano; motivo: string };
 
-export function fimDoBloco(inicio: number): number {
-  const bloco = BLOCOS.find(([abre, fecha]) => inicio >= abre && inicio < fecha);
-  return bloco ? bloco[1] : inicio;
+export function fimDoBloco(_inicio?: number): number {
+  return FECHA;
 }
 
 /** Por `ordem` do serviço; empatou, vale a ordem em que a cliente adicionou. */
@@ -46,21 +55,38 @@ export function planejar(itens: ItemPacote[], modo: ModoPacote, inicio: number):
   const intervalos: Intervalo[] = [];
   const ordenados = ordenar(itens);
   if (modo === "sequencia") {
-    let cursor = inicio;
+    let cursor = aposAlmoco(inicio);
     for (const item of ordenados) {
-      intervalos.push({ item, inicio: cursor, fim: cursor + item.servico.duracaoMin });
-      cursor += item.servico.duracaoMin;
+      const comeca = aposAlmoco(cursor);
+      const fim = somarTrabalho(comeca, item.servico.duracaoMin);
+      intervalos.push({ item, inicio: comeca, fim });
+      cursor = fim;
     }
   } else {
     const pistas = new Map<string, number>();
     for (const item of ordenados) {
-      const comeca = pistas.get(item.profissional.id) ?? inicio;
-      intervalos.push({ item, inicio: comeca, fim: comeca + item.servico.duracaoMin });
-      pistas.set(item.profissional.id, comeca + item.servico.duracaoMin);
+      const comeca = aposAlmoco(pistas.get(item.profissional.id) ?? inicio);
+      const fim = somarTrabalho(comeca, item.servico.duracaoMin);
+      intervalos.push({ item, inicio: comeca, fim });
+      pistas.set(item.profissional.id, fim);
     }
   }
   const fim = intervalos.reduce((m, i) => Math.max(m, i.fim), inicio);
-  return { intervalos, fim, totalMin: fim - inicio, limite: fimDoBloco(inicio) };
+  const trabalho = intervalos.reduce((s, i) => s + i.item.servico.duracaoMin, 0);
+  const totalMin =
+    modo === "sequencia"
+      ? trabalho
+      : Math.max(
+          ...Array.from(
+            new Set(intervalos.map((i) => i.item.profissional.id)),
+            (id) =>
+              intervalos
+                .filter((i) => i.item.profissional.id === id)
+                .reduce((s, i) => s + i.item.servico.duracaoMin, 0),
+          ),
+          0,
+        );
+  return { intervalos, fim, totalMin, limite: FECHA };
 }
 
 const NA_REGIAO: Record<Regiao, string> = {
@@ -116,12 +142,12 @@ export function verificar(
     if (motivo) return { ok: false, plano, motivo };
   }
   for (const { item, inicio: de, fim } of plano.intervalos) {
-    if (fim > plano.limite) {
-      const depois =
-        plano.limite === 12 * 60
-          ? "depois do início do almoço (12:00)"
-          : "depois do fim do expediente (18:00)";
-      return { ok: false, plano, motivo: `Terminaria às ${rotuloHora(fim)}, ${depois}.` };
+    if (fim > FECHA) {
+      return {
+        ok: false,
+        plano,
+        motivo: `Terminaria às ${rotuloHora(fim)}, depois do fim do expediente (18:00).`,
+      };
     }
     const c = conflito(item.profissional.id, chaveDia, de, fim, bloqueios);
     if (c) {
@@ -184,8 +210,8 @@ export type Candidato =
   | { ok: false; profissional: Profissional; motivo: string };
 
 /**
- * Para um serviço que ainda não está no pacote: escolhe a profissional mais experiente
- * que consegue encaixar. Se ninguém consegue, devolve o motivo da mais experiente.
+ * Para um serviço que ainda não está no pacote: escolhe a primeira profissional
+ * da equipe que consegue encaixar. Se ninguém consegue, devolve o motivo.
  */
 export function avaliarCandidato(
   servico: Servico,

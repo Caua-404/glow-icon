@@ -11,14 +11,14 @@ const corDe = (profissionalId: string) =>
   `var(--pro-${Math.max(0, equipe.findIndex((p) => p.id === profissionalId)) + 1})`;
 
 /**
- * Barra de tempo do pacote: do horário escolhido até o fim do bloco do expediente
- * (almoço ou fim do dia). Cada serviço ocupa um trecho; o que sobra fica livre.
+ * Barra de tempo do pacote: do horário escolhido até o fim do expediente (18:00).
+ * Cada serviço ocupa um trecho; o que sobra fica livre.
  * Ao mesmo tempo: uma faixa por profissional. Em sequência: uma faixa só.
  */
 export default function BarraTempo({ plano, inicio, modo }: Props) {
   const janela = Math.max(30, plano.limite - inicio);
   const sobra = plano.limite - plano.fim;
-  const fimDoBlocoRotulo = plano.limite === 12 * 60 ? "almoço" : "fim do expediente";
+  const fimDoBlocoRotulo = "fim do expediente";
 
   const faixas: { chave: string; nome?: string; itens: Intervalo[] }[] =
     modo === "simultaneo"

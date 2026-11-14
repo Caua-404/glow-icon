@@ -10,7 +10,7 @@ import type { ItemPacote } from "./pacote";
 
 export type ItemSacola = {
   servicoId: string;
-  /** profissional que a cliente trocou; sem valor, vale a recomendada */
+  /** profissional escolhida; sem valor, usa a primeira que realiza o serviço */
   profissionalId?: string;
 };
 
@@ -113,7 +113,7 @@ export function useSacola(): ItemSacola[] {
   return useSyncExternalStore(assinar, sacolaAtual, () => VAZIA);
 }
 
-/** Monta o pacote a partir da sacola. Sem profissional escolhida, usa a recomendada. */
+/** Monta o pacote a partir da sacola. Sem profissional escolhida, usa a primeira da lista. */
 export function itensDaSacola(sacola: ItemSacola[], preferidaId?: string): ItemPacote[] {
   return sacola.flatMap((i) => {
     const servico = servicoPorId(i.servicoId);

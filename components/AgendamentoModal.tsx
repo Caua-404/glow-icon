@@ -19,9 +19,14 @@ import {
   rotuloHora,
   type Dia,
 } from "@/lib/agenda";
-import { linkWhatsapp } from "@/data/site";
+import { CONTA_HABILITADA, linkWhatsapp } from "@/data/site";
 import { adicionarBloqueios, useBloqueios } from "@/lib/bloqueios";
 import { registrarVisita, useCliente } from "@/lib/conta";
+import {
+  FORMAS_PAGAMENTO,
+  montarMensagemPedido,
+  type FormaPagamento,
+} from "@/lib/pedido";
 import {
   encaixar,
   faixa,
@@ -52,7 +57,7 @@ const titulos: Record<Etapa, string> = {
   profissional: "Escolha quem atende",
   dia: "Escolha o dia",
   horario: "Escolha o horário",
-  dados: "Seus dados",
+  dados: "Dados do atendimento",
   resumo: "Confira o resumo",
   fim: "Pedido enviado",
 };
@@ -62,7 +67,7 @@ const mensagemMascote: Record<Etapa, string> = {
   profissional: "Com quem hoje?",
   dia: "Escolha o dia",
   horario: "Agora o horário",
-  dados: "Quase lá!",
+  dados: "Nome, WhatsApp e pagamento",
   resumo: "Quase lá!",
   fim: "Tudo certo! Te esperamos.",
 };
@@ -176,7 +181,8 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
   const dialogo = useRef<HTMLDivElement>(null);
   const titulo = useRef<HTMLHeadingElement>(null);
   const dias = useMemo(proximosDias, []);
-  const cliente = useCliente();
+  const sessao = useCliente();
+  const cliente = CONTA_HABILITADA ? sessao : null;
   const sacola = useSacola();
   const bloqueios = useBloqueios();
   const preferidaId = pre.profissionalId;
@@ -185,20 +191,27 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
   const [dia, setDia] = useState<Dia | null>(null);
   const [hora, setHora] = useState<string | null>(null);
   const [modoPacote, setModoPacote] = useState<ModoPacote>("sequencia");
-  const [nome, setNome] = useState(cliente?.nome ?? "");
-  const [telefone, setTelefone] = useState(cliente ? formatarTelefone(cliente.whatsapp) : "");
-  const [erros, setErros] = useState<{ nome?: string; telefone?: string }>({});
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [primeiraVisita, setPrimeiraVisita] = useState<boolean | null>(null);
+  const [pagamento, setPagamento] = useState<FormaPagamento | "">("");
+  const [observacao, setObservacao] = useState("");
+  const [erros, setErros] = useState<{
+    nome?: string;
+    telefone?: string;
+    primeiraVisita?: string;
+    pagamento?: string;
+  }>({});
   const [reserva, setReserva] = useState<Plano | null>(null);
   const [erroReserva, setErroReserva] = useState<string | null>(null);
   const [verMensagem, setVerMensagem] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const campoMensagem = useRef<HTMLTextAreaElement>(null);
 
-  const etapas = useMemo<Etapa[]>(() => {
-    const meio: Etapa[] = ["servico", "profissional", "dia", "horario"];
-    if (!cliente) meio.push("dados");
-    return [...meio, "resumo", "fim"];
-  }, [cliente]);
+  const etapas = useMemo<Etapa[]>(
+    () => ["servico", "profissional", "dia", "horario", "dados", "resumo", "fim"],
+    [],
+  );
 
   const etapa = etapas[Math.min(passo, etapas.length - 1)];
   const passosVisiveis = etapas.length - 1;
@@ -224,6 +237,19 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
       setTelefone((t) => t || formatarTelefone(cliente.whatsapp));
     }
   }, [cliente]);
+
+  function mensagemDoPedido(p: Plano, d: Dia): string {
+    if (!pagamento) return "";
+    return montarMensagemPedido({
+      nome,
+      telefone,
+      primeiraVisita: primeiraVisita === true,
+      pagamento,
+      observacao,
+      dia: d,
+      plano: p,
+    });
+  }
 
   const aoFechar = useRef(onFechar);
   useEffect(() => {
@@ -317,21 +343,22 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
     setModoPacote(v.modo);
     setErroReserva(null);
     esvaziarSacola();
-    const mensagem = `Olá! Gostaria de agendar ${v.plano.intervalos
-      .map(
-        (i) =>
-          `${i.item.servico.nome} com ${i.item.profissional.nome} (${faixa(i.inicio, i.fim)})`,
-      )
-      .join("; ")}, em ${dataExtenso(dia)}. Total: ${formatarPreco(totalReais(v.plano.intervalos.map((i) => i.item)))}. Meu nome é ${nome.trim()} e meu telefone é ${telefone}.`;
-    window.open(linkWhatsapp(mensagem), "_blank", "noopener,noreferrer");
+    window.open(linkWhatsapp(mensagemDoPedido(v.plano, dia)), "_blank", "noopener,noreferrer");
     avancar();
   }
 
   function enviarDados(e: React.FormEvent) {
     e.preventDefault();
-    const novos: { nome?: string; telefone?: string } = {};
-    if (nome.trim().length < 2) novos.nome = "Informe seu nome.";
-    if (telefone.replace(/\D/g, "").length < 10) novos.telefone = "Informe um telefone com DDD.";
+    const novos: {
+      nome?: string;
+      telefone?: string;
+      primeiraVisita?: string;
+      pagamento?: string;
+    } = {};
+    if (nome.trim().length < 2) novos.nome = "Informe seu nome completo.";
+    if (telefone.replace(/\D/g, "").length < 10) novos.telefone = "Informe um WhatsApp com DDD.";
+    if (primeiraVisita === null) novos.primeiraVisita = "Diga se é a primeira visita.";
+    if (!pagamento) novos.pagamento = "Escolha como pretende pagar.";
     setErros(novos);
     if (Object.keys(novos).length === 0) avancar();
   }
@@ -350,14 +377,7 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
       : "";
 
   const diferentes = plano ? new Set(plano.intervalos.map((i) => i.item.profissional.id)).size : 0;
-  const mensagemWhatsapp = plano
-    ? `Olá! Gostaria de agendar ${plano.intervalos
-        .map(
-          (i) =>
-            `${i.item.servico.nome} com ${i.item.profissional.nome} (${faixa(i.inicio, i.fim)})`,
-        )
-        .join("; ")}, em ${quando}. Total: ${formatarPreco(totalReais(plano.intervalos.map((i) => i.item)))}. Meu nome é ${nome.trim()} e meu telefone é ${telefone}.`
-    : "";
+  const mensagemWhatsapp = plano && dia && pagamento ? mensagemDoPedido(plano, dia) : "";
 
   return (
     <motion.div
@@ -395,13 +415,6 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
             <Mascote size="sm" balao="esquerda" mensagem={mensagemMascote[etapa]} />
           )}
         </div>
-
-        <p className="flex items-center gap-3 border-b border-linha bg-superficie px-5 py-3 text-xs leading-relaxed text-suave sm:px-8">
-          <span className="r-pill sombra-1 shrink-0 bg-card px-3 py-1 text-[0.65rem] font-medium uppercase tracking-widest text-tinta">
-            Simulação
-          </span>
-          <span>Nenhum horário é reservado de verdade e nada sai deste aparelho.</span>
-        </p>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-8 sm:px-8">
           <h2
@@ -482,8 +495,8 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
                 <>
                   {horarios.filter((h) => h.livre).length === 0 ? (
                     <p className="text-sm text-suave">
-                      Não há horário neste dia em que o pacote inteiro caiba. Volte e escolha outro
-                      dia, ou tire um serviço da sacola.
+                      Neste dia o pacote não termina até as 18:00. Escolha um horário mais cedo ou
+                      outro dia.
                     </p>
                   ) : (
                     <div className="space-y-6">
@@ -538,10 +551,10 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
 
               {etapa === "dados" && (
                 <form onSubmit={enviarDados} noValidate>
-                  <div className="space-y-5">
+                  <div className="space-y-6">
                     <div>
                       <label htmlFor="ag-nome" className="rotulo block">
-                        Nome
+                        Nome completo
                       </label>
                       <input
                         id="ag-nome"
@@ -561,14 +574,14 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
                     </div>
                     <div>
                       <label htmlFor="ag-tel" className="rotulo block">
-                        Telefone
+                        WhatsApp com DDD
                       </label>
                       <input
                         id="ag-tel"
                         type="tel"
                         inputMode="tel"
                         autoComplete="tel-national"
-                        placeholder="(00) 00000-0000"
+                        placeholder="(94) 98400-0000"
                         value={telefone}
                         onChange={(e) => setTelefone(formatarTelefone(e.target.value))}
                         aria-invalid={!!erros.telefone}
@@ -580,6 +593,74 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
                           {erros.telefone}
                         </p>
                       )}
+                    </div>
+                    <fieldset>
+                      <legend className="rotulo">É a primeira vez no Glow Icon?</legend>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {(
+                          [
+                            [true, "Sim"],
+                            [false, "Não"],
+                          ] as const
+                        ).map(([valor, rotulo]) => {
+                          const ativa = primeiraVisita === valor;
+                          return (
+                            <button
+                              key={rotulo}
+                              type="button"
+                              aria-pressed={ativa}
+                              onClick={() => setPrimeiraVisita(valor)}
+                              className={`r-md min-h-12 text-sm ${
+                                ativa
+                                  ? "bg-tinta text-fundo shadow-[var(--sombra-2)]"
+                                  : "sombra-1 bg-card"
+                              }`}
+                            >
+                              {rotulo}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {erros.primeiraVisita && (
+                        <p className="mt-1 text-sm">{erros.primeiraVisita}</p>
+                      )}
+                    </fieldset>
+                    <fieldset>
+                      <legend className="rotulo">Forma de pagamento</legend>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        {FORMAS_PAGAMENTO.map((forma) => {
+                          const ativa = pagamento === forma;
+                          return (
+                            <button
+                              key={forma}
+                              type="button"
+                              aria-pressed={ativa}
+                              onClick={() => setPagamento(forma)}
+                              className={`r-md min-h-12 text-sm ${
+                                ativa
+                                  ? "bg-tinta text-fundo shadow-[var(--sombra-2)]"
+                                  : "sombra-1 bg-card"
+                              }`}
+                            >
+                              {forma}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {erros.pagamento && <p className="mt-1 text-sm">{erros.pagamento}</p>}
+                    </fieldset>
+                    <div>
+                      <label htmlFor="ag-obs" className="rotulo block">
+                        Observação
+                      </label>
+                      <textarea
+                        id="ag-obs"
+                        rows={3}
+                        value={observacao}
+                        onChange={(e) => setObservacao(e.target.value)}
+                        placeholder="Alergia, formato da unha, comprimento da trança, cor, ou o que a equipe precisa saber."
+                        className="r-md mt-2 w-full resize-none border border-linha bg-card px-4 py-3 text-base outline-none transition-shadow focus:border-polish focus:shadow-[0_0_0_4px_color-mix(in_srgb,var(--polish)_30%,transparent)]"
+                      />
                     </div>
                   </div>
                   <button type="submit" className="btn-acento mt-8 w-full">
@@ -606,7 +687,10 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
                           ]
                         : []),
                       ["Nome", nome.trim()],
-                      ["Telefone", telefone],
+                      ["WhatsApp", telefone],
+                      ["Primeira visita", primeiraVisita ? "Sim" : "Não"],
+                      ["Pagamento", pagamento],
+                      ...(observacao.trim() ? [["Observação", observacao.trim()]] : []),
                     ].map(([k, v]) => (
                       <div key={k} className="flex justify-between gap-6 border-b border-linha py-3">
                         <dt className="text-suave">{k}</dt>
@@ -633,8 +717,9 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
                     {quando}, das {rotuloHora(plano.intervalos[0].inicio)} às {rotuloHora(plano.fim)}.
                   </p>
                   <p className="mt-4 text-sm leading-relaxed text-suave">
-                    A mensagem abriu no WhatsApp do salão. Confirme por lá para o horário ficar
-                    combinado. Remarcações com menos de 24 horas só pelo WhatsApp.
+                    A mensagem foi para o WhatsApp do salão, no (94) 98442-1049. Confirme por lá
+                    para o horário ficar combinado. Remarcações com menos de 24 horas só pelo
+                    WhatsApp.
                   </p>
                   <a
                     href={linkWhatsapp(mensagemWhatsapp)}
@@ -659,7 +744,7 @@ function Painel({ pre, onFechar }: { pre: PreSelecao; onFechar: () => void }) {
                       <textarea
                         ref={campoMensagem}
                         readOnly
-                        rows={6}
+                        rows={18}
                         value={mensagemWhatsapp}
                         onFocus={(e) => e.currentTarget.select()}
                         aria-label="Mensagem enviada ao salão"

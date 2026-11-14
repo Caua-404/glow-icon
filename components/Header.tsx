@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { CONTA_HABILITADA } from "@/data/site";
-import { useCliente } from "@/lib/conta";
 import { resumoSacola, useSacola } from "@/lib/sacola";
 import { useAgendamento } from "./AgendamentoContext";
-import { useContaUi } from "./ContaContext";
 import IconeSacola from "./IconeSacola";
 import LogoSvg from "./LogoSvg";
 import ThemeToggle from "./ThemeToggle";
@@ -15,6 +11,7 @@ import ThemeToggle from "./ThemeToggle";
 const links = [
   { href: "#servicos", rotulo: "Serviços" },
   { href: "#equipe", rotulo: "Equipe" },
+  { href: "#estudio", rotulo: "Estúdio" },
   { href: "#inspiracoes", rotulo: "Inspirações" },
   { href: "#contato", rotulo: "Contato" },
 ];
@@ -23,11 +20,8 @@ export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [rolou, setRolou] = useState(false);
   const { abrir } = useAgendamento();
-  const { abrirEntrar } = useContaUi();
-  const cliente = useCliente();
   const sacola = useSacola();
   const qtd = resumoSacola(sacola).qtd;
-  const primeiroNome = cliente?.nome.trim().split(/\s+/)[0];
 
   // Transparente no topo; ao rolar vira barra com blur e borda.
   useEffect(() => {
@@ -43,7 +37,7 @@ export default function Header() {
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const tecla = (e: KeyboardEvent) => e.key === "Escape" && setMenuAberto(false);
-    const desktop = window.matchMedia("(min-width: 768px)");
+    const desktop = window.matchMedia("(min-width: 1024px)");
     const aoMudar = () => desktop.matches && setMenuAberto(false);
     window.addEventListener("keydown", tecla);
     desktop.addEventListener("change", aoMudar);
@@ -68,20 +62,20 @@ export default function Header() {
         }`}
       >
         <div
-          className={`container-glow grid grid-cols-[1fr_auto] items-center gap-2 transition-[height] duration-300 md:grid-cols-[1fr_auto_1fr] ${
+          className={`container-glow grid grid-cols-[1fr_auto] items-center gap-2 !px-4 sm:!px-6 md:!px-8 transition-[height] duration-300 lg:grid-cols-[1fr_auto_1fr] ${
             barra ? "h-14" : "h-20"
           }`}
         >
-          <a href="#topo" aria-label="Glow Icon, início" className="justify-self-start">
+          <a href="#topo" aria-label="Glow Icon, início" className="min-w-0 max-w-full justify-self-start">
             <LogoSvg
               animarEstrela
-              className={`w-auto transition-[height] duration-300 ${
-                barra ? "h-[14px] sm:h-[16px]" : "h-[15px] sm:h-[20px]"
+              className={`block w-auto max-w-full ${
+                barra ? "h-[12px] sm:h-[16px]" : "h-[13px] sm:h-[20px]"
               }`}
             />
           </a>
 
-          <nav aria-label="Principal" className="hidden items-center gap-10 md:flex">
+          <nav aria-label="Principal" className="hidden items-center gap-5 lg:flex lg:gap-9">
             {links.map((l) => (
               <a
                 key={l.href}
@@ -97,30 +91,8 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className="flex items-center justify-self-end gap-1 sm:gap-2">
+          <div className="flex shrink-0 items-center justify-self-end gap-0 sm:gap-1 lg:gap-2">
             <ThemeToggle />
-            {CONTA_HABILITADA && cliente ? (
-              <Link
-                href="/conta"
-                className="hidden min-h-11 items-center px-2 text-sm md:flex"
-              >
-                {primeiroNome}
-              </Link>
-            ) : (
-              <button
-                type="button"
-                disabled={!CONTA_HABILITADA}
-                title={CONTA_HABILITADA ? undefined : "Em breve"}
-                onClick={() => {
-                  if (!CONTA_HABILITADA) return;
-                  setMenuAberto(false);
-                  abrirEntrar();
-                }}
-                className="hidden min-h-11 items-center px-2 text-sm md:flex disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Entrar
-              </button>
-            )}
             <button
               type="button"
               onClick={() => {
@@ -147,7 +119,7 @@ export default function Header() {
                 setMenuAberto(false);
                 abrir();
               }}
-              className="btn-acento !min-h-10 !px-4"
+              className="btn-acento !min-h-10 !px-3 sm:!px-4"
             >
               Agendar
             </button>
@@ -157,7 +129,7 @@ export default function Header() {
               aria-expanded={menuAberto}
               aria-controls="menu-mobile"
               aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
-              className="flex h-11 w-11 items-center justify-center md:hidden"
+              className="flex h-11 w-11 items-center justify-center lg:hidden"
             >
               <span className="relative block h-3 w-5" aria-hidden="true">
                 <span
@@ -185,7 +157,7 @@ export default function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-30 flex flex-col justify-center bg-fundo pt-14 md:hidden"
+            className="fixed inset-0 z-30 flex flex-col justify-center bg-fundo pt-14 lg:hidden"
           >
             <ul className="container-glow">
               {links.map((l, i) => (
@@ -203,31 +175,6 @@ export default function Header() {
                   </motion.a>
                 </li>
               ))}
-              <li className="overflow-hidden border-b border-linha">
-                {CONTA_HABILITADA && cliente ? (
-                  <Link
-                    href="/conta"
-                    onClick={() => setMenuAberto(false)}
-                    className="titulo flex py-5 text-[clamp(2.75rem,13vw,4.5rem)] font-light leading-none"
-                  >
-                    Minha conta
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={!CONTA_HABILITADA}
-                    title={CONTA_HABILITADA ? undefined : "Em breve"}
-                    onClick={() => {
-                      if (!CONTA_HABILITADA) return;
-                      setMenuAberto(false);
-                      abrirEntrar();
-                    }}
-                    className="titulo flex py-5 text-[clamp(2.75rem,13vw,4.5rem)] font-light leading-none disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Entrar
-                  </button>
-                )}
-              </li>
             </ul>
           </motion.nav>
         )}

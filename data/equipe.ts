@@ -204,14 +204,9 @@ export function nivelNoServico(p: Profissional, servicoId: string): 0 | Nivel {
   );
 }
 
-/** Quem realiza o serviço, da mais experiente para a menos (empate: melhor nota). */
+/** Quem realiza o serviço, na ordem da equipe. Qualquer uma da lista pode atender. */
 export function profissionaisDoServico(servico: Pick<Servico, "id">): Profissional[] {
-  return equipe
-    .filter((p) => nivelNoServico(p, servico.id) > 0)
-    .sort(
-      (a, b) =>
-        nivelNoServico(b, servico.id) - nivelNoServico(a, servico.id) || notaMedia(b) - notaMedia(a),
-    );
+  return equipe.filter((p) => nivelNoServico(p, servico.id) > 0);
 }
 
 export function estrelas(n: Nivel): string {

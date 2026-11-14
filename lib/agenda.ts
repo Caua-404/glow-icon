@@ -1,12 +1,17 @@
-// Agenda local: os horários ocupados são determinísticos (mesma profissional + dia + hora
-// = mesmo resultado), para o card da equipe e o modal concordarem.
+// Agenda local. Horários livres, salvo reservas feitas neste aparelho.
+// O salão confirma de verdade pelo WhatsApp.
 
 import { bloqueiosAtuais, type Bloqueio } from "./bloqueios";
 
-/** Expediente em minutos: 8h às 12h e 13h às 18h. */
+export const ABRE = 8 * 60;
+export const ALMOCO_INICIO = 12 * 60;
+export const ALMOCO_FIM = 13 * 60;
+export const FECHA = 18 * 60;
+
+/** Horários em que dá para começar: 8h–12h e 13h–18h. */
 export const BLOCOS: ReadonlyArray<readonly [number, number]> = [
-  [8 * 60, 12 * 60],
-  [13 * 60, 18 * 60],
+  [ABRE, ALMOCO_INICIO],
+  [ALMOCO_FIM, FECHA],
 ];
 
 export const DIAS_VISIVEIS = 14;
@@ -53,24 +58,31 @@ export function dataExtenso(d: Dia): string {
   return `${diaSemanaDe(d)}, ${d.data.getDate()} de ${mesDe(d)}`;
 }
 
-function hash(texto: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < texto.length; i++) {
-    h ^= texto.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
+/** Se caiu no almoço, começa depois dele. */
+export function aposAlmoco(minutos: number): number {
+  return minutos >= ALMOCO_INICIO && minutos < ALMOCO_FIM ? ALMOCO_FIM : minutos;
 }
 
-function ocupado(profissionalId: string, chave: string, minutos: number): boolean {
-  return hash(`${profissionalId}|${chave}|${minutos}`) % 100 < 30;
+/** Soma minutos de trabalho a partir de `inicio`, pulando 12h–13h. */
+export function somarTrabalho(inicio: number, duracaoMin: number): number {
+  let t = aposAlmoco(inicio);
+  let resto = duracaoMin;
+  while (resto > 0) {
+    if (t < ALMOCO_INICIO) {
+      const cabe = ALMOCO_INICIO - t;
+      if (resto <= cabe) return t + resto;
+      resto -= cabe;
+      t = ALMOCO_FIM;
+      continue;
+    }
+    return t + resto;
+  }
+  return t;
 }
 
 /**
  * O que impede a profissional de atender em [inicio, fim), ou null se está livre.
- * Regra única (usada por horariosDoDia e pelo pacote): vale o intervalo inteiro.
- * - reservas feitas neste aparelho: qualquer sobreposição com [inicio, fim) conflita;
- * - ocupação de exemplo: todas as células de 30 min dentro de [inicio, fim) precisam estar livres.
+ * Só reservas feitas neste aparelho. O horário definitivo é o do WhatsApp.
  */
 export function conflito(
   profissionalId: string,
@@ -83,15 +95,10 @@ export function conflito(
     (b) => b.dia === chave && b.profissionalId === profissionalId && b.inicio < fim && b.fim > inicio,
   );
   if (reservado) return { de: reservado.inicio, ate: reservado.fim, reserva: true };
-  for (let celula = Math.floor(inicio / PASSO_MIN) * PASSO_MIN; celula < fim; celula += PASSO_MIN) {
-    if (ocupado(profissionalId, chave, celula)) {
-      return { de: celula, ate: celula + PASSO_MIN, reserva: false };
-    }
-  }
   return null;
 }
 
-/** Horários do dia para um serviço de `duracaoMin`, que precisa terminar dentro do bloco. */
+/** Horários do dia em que um serviço de `duracaoMin` termina até as 18h. */
 export function horariosDoDia(
   dia: Dia,
   duracaoMin: number,
@@ -104,12 +111,14 @@ export function horariosDoDia(
   const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
   const lista: Horario[] = [];
   BLOCOS.forEach(([abre, fecha], bloco) => {
-    for (let t = abre; t + duracaoMin <= fecha; t += PASSO_MIN) {
+    for (let t = abre; t < fecha; t += PASSO_MIN) {
       if (hoje && t <= minutosAgora + 30) continue;
+      const fim = somarTrabalho(t, duracaoMin);
+      if (fim > FECHA) continue;
       lista.push({
         rotulo: rotuloHora(t),
         minutos: t,
-        livre: conflito(profissionalId, dia.chave, t, t + duracaoMin, bloqueios) === null,
+        livre: conflito(profissionalId, dia.chave, t, fim, bloqueios) === null,
         periodo: bloco === 0 ? "manha" : "tarde",
       });
     }
