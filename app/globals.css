@@ -1,0 +1,610 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --polish: cor do esmalte escolhida pelo visitante. Interpolável para a troca suave. */
+@property --polish {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #c8968a;
+}
+@property --polish-fg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #2a2019;
+}
+
+:root {
+  --fundo: #f7f3ee;
+  --card: #fffdfa;
+  --superficie: #efe7dd;
+  --tinta: #2a2019;
+  --suave: #7a6a5c;
+  --linha: #e3d8cb;
+  --madeira: #a07a55;
+  --madeira-escura: #6b4f3a;
+  --dourado: #b8925a;
+  /* números: dourado da paleta não passa AA no claro; carvalho escuro da mesma família */
+  --dourado-texto: #6b4f3a;
+
+  /* uma cor por profissional na barra de tempo do pacote */
+  --pro-1: #c4a882;
+  --pro-2: #a07a55;
+  --pro-3: #8b6b4a;
+  --pro-4: #6b4f3a;
+
+  /* Raios: nada no site tem canto reto */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+
+  /* Sombras suaves em camadas (nunca borda dura) */
+  --sombra-1: 0 1px 2px rgb(42 32 25 / 0.05), 0 2px 8px rgb(42 32 25 / 0.05);
+  --sombra-2:
+    0 1px 2px rgb(42 32 25 / 0.04), 0 4px 10px rgb(42 32 25 / 0.05),
+    0 14px 32px rgb(42 32 25 / 0.07);
+  --sombra-3:
+    0 2px 4px rgb(42 32 25 / 0.05), 0 8px 18px rgb(42 32 25 / 0.07),
+    0 24px 56px rgb(42 32 25 / 0.1);
+
+  /* Esmaltes (cor e cor do texto sobre ela) — nunca #000 */
+  --sw-nude: #c8968a;
+  --sw-nude-fg: #2a2019;
+  --sw-vermelho: #b3202a;
+  --sw-vermelho-fg: #f7f3ee;
+  --sw-vinho: #6b1f33;
+  --sw-vinho-fg: #f7f3ee;
+  --sw-rosa: #db7c9b;
+  --sw-rosa-fg: #2a2019;
+  --sw-preto: #2a2019;
+  --sw-preto-fg: #f7f3ee;
+
+  /* padrão: nude rosado — só detalhes (seletor, mascote, linha do tempo) */
+  --polish: var(--sw-nude);
+  --polish-fg: var(--sw-nude-fg);
+
+  /* botão primário: carvalho, não o esmalte */
+  --acento: var(--madeira-escura);
+  --acento-fg: #f7f3ee;
+}
+
+.dark {
+  --fundo: #17120e;
+  --card: #211a15;
+  --superficie: #2a211b;
+  --tinta: #f3ece3;
+  --suave: #b3a595;
+  --linha: #3a2f26;
+  --dourado: #cfae78;
+  --dourado-texto: #cfae78;
+  --madeira: #a07a55;
+  --madeira-escura: #6b4f3a;
+
+  --pro-1: #5c4634;
+  --pro-2: #6b4f3a;
+  --pro-3: #7a5c40;
+  --pro-4: #8b6b4a;
+
+  /* no escuro a sombra some no fundo: um fio de luz mantém o contorno */
+  --sombra-1: 0 1px 2px rgb(10 8 6 / 0.5), 0 2px 8px rgb(10 8 6 / 0.35),
+    inset 0 0 0 1px rgb(243 236 227 / 0.05);
+  --sombra-2:
+    0 1px 2px rgb(10 8 6 / 0.4), 0 4px 10px rgb(10 8 6 / 0.35), 0 14px 32px rgb(10 8 6 / 0.45),
+    inset 0 0 0 1px rgb(243 236 227 / 0.06);
+  --sombra-3:
+    0 2px 4px rgb(10 8 6 / 0.45), 0 8px 18px rgb(10 8 6 / 0.4), 0 24px 56px rgb(10 8 6 / 0.55),
+    inset 0 0 0 1px rgb(243 236 227 / 0.08);
+
+  --sw-vermelho: #d63a45;
+  --sw-vinho: #a33657;
+  --sw-preto: #3d3228;
+}
+
+:root[data-polish="vermelho"] {
+  --polish: var(--sw-vermelho);
+  --polish-fg: var(--sw-vermelho-fg);
+}
+:root[data-polish="vinho"] {
+  --polish: var(--sw-vinho);
+  --polish-fg: var(--sw-vinho-fg);
+}
+:root[data-polish="rosa"] {
+  --polish: var(--sw-rosa);
+  --polish-fg: var(--sw-rosa-fg);
+}
+:root[data-polish="preto"] {
+  --polish: var(--sw-preto);
+  --polish-fg: var(--sw-preto-fg);
+}
+
+/* troca suave de esmalte no site inteiro */
+html {
+  transition:
+    --polish 0.5s ease,
+    --polish-fg 0.5s ease;
+}
+
+@theme inline {
+  --color-fundo: var(--fundo);
+  --color-tinta: var(--tinta);
+  --color-suave: var(--suave);
+  --color-linha: var(--linha);
+  --color-superficie: var(--superficie);
+  --color-card: var(--card);
+  --color-acento: var(--acento);
+  --color-acento-fg: var(--acento-fg);
+  --color-polish: var(--polish);
+  --color-madeira: var(--madeira);
+  --color-madeira-escura: var(--madeira-escura);
+  --color-dourado: var(--dourado);
+  --color-dourado-texto: var(--dourado-texto);
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-inter), Inter, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--tinta);
+  outline-offset: 3px;
+}
+/* Títulos recebem foco por código a cada etapa do modal (para leitor de tela); sem moldura. */
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
+::selection {
+  background: var(--tinta);
+  color: var(--fundo);
+}
+
+@layer components {
+  /* Contêiner de 1200px; dentro dele, grid de 12 colunas (grid grid-cols-12 gap-x-6) */
+  .container-glow {
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 768px) {
+    .container-glow {
+      padding-inline: 2rem;
+    }
+  }
+
+  .titulo {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    font-variant-numeric: lining-nums;
+  }
+  .rotulo {
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--suave);
+  }
+  .btn-acento {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--madeira-escura);
+    color: #f7f3ee;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    min-height: 2.75rem;
+    padding: 0 1.5rem;
+    border-radius: var(--r-pill);
+    box-shadow: 0 1px 2px rgb(42 32 25 / 0.14);
+    transition:
+      opacity 0.2s,
+      transform 0.2s;
+  }
+  .btn-acento:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+  }
+  .btn-acento:active {
+    transform: none;
+  }
+  .dark .btn-acento {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dourado) 40%, transparent);
+  }
+  .btn-linha {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--tinta);
+    font-size: 0.875rem;
+    font-weight: 500;
+    min-height: 2.75rem;
+    padding: 0 1.5rem;
+    border-radius: var(--r-pill);
+    box-shadow: inset 0 0 0 1px var(--dourado);
+    transition: background 0.2s;
+  }
+  .btn-linha:hover {
+    background: color-mix(in srgb, var(--madeira) 12%, var(--card));
+  }
+  .ripado {
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 11px,
+      color-mix(in srgb, var(--madeira) 4%, transparent) 11px,
+      color-mix(in srgb, var(--madeira) 4%, transparent) 12px
+    );
+  }
+  .numero {
+    color: var(--dourado-texto);
+  }
+}
+
+/* Raios do site: use estas classes em cards, imagens, inputs, chips e etiquetas */
+@utility r-sm {
+  border-radius: var(--r-sm);
+}
+@utility r-md {
+  border-radius: var(--r-md);
+}
+@utility r-lg {
+  border-radius: var(--r-lg);
+}
+@utility r-pill {
+  border-radius: var(--r-pill);
+}
+@utility sombra-1 {
+  box-shadow: var(--sombra-1);
+}
+@utility sombra-2 {
+  box-shadow: var(--sombra-2);
+}
+@utility sombra-3 {
+  box-shadow: var(--sombra-3);
+}
+
+/* ------------------------------------------------------------------
+   Abertura do site: véu de papel na primeira visita da sessão (home).
+   instrumentation-client marca wait | skip. O Hero troca wait → play.
+   Linha do tempo (play):
+     0.00–0.55  estrela
+     0.28–0.90  nome
+     0.50–1.10  risco dourado
+     0.70–1.20  frase
+     1.40–2.10  a folha sobe
+     1.50+      o hero entra por baixo
+   ------------------------------------------------------------------ */
+
+html[data-intro="wait"],
+html[data-intro="play"]:not(.abertura-fim) {
+  overflow: hidden;
+}
+
+.abertura {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+html:not([data-intro="skip"]):not(.abertura-fim) .abertura {
+  pointer-events: auto;
+}
+html[data-intro="skip"] .abertura,
+html.abertura-fim .abertura {
+  display: none;
+}
+
+.abertura-folha {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background-color: var(--fundo);
+  color: inherit;
+  appearance: none;
+  font: inherit;
+  text-align: center;
+  cursor: default;
+  user-select: none;
+}
+.abertura-folha:focus-visible {
+  outline: none;
+}
+.abertura-marca {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.abertura-estrela {
+  width: 3.5rem;
+  height: 3.5rem;
+  opacity: 0;
+}
+.abertura-nome {
+  margin-top: 1.25rem;
+  font-size: clamp(2.75rem, 8vw, 4.5rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  opacity: 0;
+}
+.abertura-risco {
+  display: block;
+  width: 3rem;
+  height: 1px;
+  margin-top: 1.25rem;
+  background: var(--dourado);
+  transform: scaleX(0);
+  transform-origin: center;
+}
+.abertura-frase {
+  margin-top: 1rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--suave);
+  opacity: 0;
+}
+
+html[data-intro="play"] .abertura-estrela {
+  animation: abertura-estrela 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s both;
+}
+html[data-intro="play"] .abertura-nome {
+  animation: i-up 0.55s ease-out 0.28s both;
+}
+html[data-intro="play"] .abertura-risco {
+  animation: abertura-risco 0.55s cubic-bezier(0.55, 0, 0.2, 1) 0.52s both;
+}
+html[data-intro="play"] .abertura-frase {
+  animation: i-fade 0.45s ease 0.72s both;
+}
+html[data-intro="play"] .abertura-folha {
+  animation: abertura-sobe 0.7s cubic-bezier(0.76, 0, 0.24, 1) 1.4s both;
+}
+
+@keyframes abertura-estrela {
+  from {
+    opacity: 0;
+    transform: scale(0.35) rotate(-48deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes abertura-risco {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes abertura-sobe {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-105%);
+  }
+}
+
+html:not([data-intro="skip"]):not([data-intro="play"]) .i-el {
+  opacity: 0;
+}
+
+@media (scripting: none) {
+  html .i-el {
+    opacity: 1;
+  }
+  .abertura {
+    display: none !important;
+  }
+}
+
+html[data-intro="play"] .i-fade {
+  animation: i-fade 0.4s ease calc(var(--d, 0s) + 1.5s) both;
+}
+html[data-intro="play"] .i-up {
+  animation: i-up 0.45s ease-out calc(var(--d, 0s) + 1.5s) both;
+}
+html[data-intro="play"] .i-wipe {
+  animation: i-wipe 0.5s cubic-bezier(0.5, 0, 0.2, 1) calc(var(--d, 0s) + 1.5s) both;
+}
+
+@keyframes i-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes i-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes i-wipe {
+  from {
+    clip-path: inset(-0.2em 100% -0.3em -0.1em);
+  }
+  to {
+    clip-path: inset(-0.2em -0.2em -0.3em -0.1em);
+  }
+}
+
+/* a) delineador: path com pathLength=1, desenhado por stroke-dashoffset; depois some */
+.liner {
+  opacity: 0;
+}
+.liner path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+html[data-intro="play"] .liner {
+  opacity: 1;
+  animation: liner-some 0.25s ease-in 2.95s both;
+}
+html[data-intro="play"] .liner path {
+  animation: liner-traco 0.8s cubic-bezier(0.55, 0, 0.25, 1) 1.6s both;
+}
+@keyframes liner-traco {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes liner-some {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* b) pincel: faixas da máscara SVG crescem em vai e volta; o estado final fica todo pintado */
+.cerdas .faixa {
+  transform-box: fill-box;
+}
+html:not([data-intro="skip"]):not([data-intro="play"]) .cerdas .faixa {
+  transform: scaleX(0);
+}
+html[data-intro="play"] .cerdas .faixa {
+  animation: cerda 0.55s cubic-bezier(0.45, 0, 0.2, 1) var(--d, 0s) both;
+}
+@keyframes cerda {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* c) estrela da logo e partículas finas que saem dela e somem */
+.logo-estrela {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+html:not([data-intro="skip"]):not([data-intro="play"]) .logo-estrela {
+  opacity: 0;
+}
+html[data-intro="play"] .logo-estrela {
+  animation: estrela-entra 0.35s ease-out 1.65s both;
+}
+@keyframes estrela-entra {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-45deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.logo-brilho circle {
+  opacity: 0;
+  fill: var(--dourado);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+html[data-intro="play"] .logo-brilho circle {
+  animation: particula 0.55s ease-out calc(var(--d, 1.15s) + 0.5s) both;
+}
+@keyframes particula {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(1);
+  }
+}
+
+/* Mascote: círculo na cor do esmalte e flutuação lenta */
+.mascote-halo {
+  background: color-mix(in srgb, var(--polish) 25%, transparent);
+}
+.dark .mascote-halo {
+  background: color-mix(in srgb, var(--polish) 35%, transparent);
+}
+.mascote-flutua {
+  animation: mascote-flutua 4s ease-in-out infinite;
+}
+@keyframes mascote-flutua {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Sem movimento: tudo já aparece no estado final */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+    transition: none;
+    overflow: auto;
+  }
+  .abertura {
+    display: none !important;
+  }
+  html .i-el,
+  html .logo-estrela,
+  html .abertura-estrela,
+  html .abertura-nome,
+  html .abertura-frase {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    animation: none !important;
+    filter: none !important;
+  }
+  .liner,
+  .logo-brilho {
+    display: none;
+  }
+  html .cerdas .faixa {
+    transform: none !important;
+    animation: none !important;
+  }
+  .mascote-flutua {
+    animation: none;
+  }
+}
