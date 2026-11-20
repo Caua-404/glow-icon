@@ -65,3 +65,5 @@ desktop.ini
 *.sqlite3
 *.db
 *.local
+.vercel
+.env*

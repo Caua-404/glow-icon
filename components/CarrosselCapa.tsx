@@ -9,6 +9,7 @@ import {
 } from "@/data/equipe";
 
 const EASE: [number, number, number, number] = [0.65, 0, 0.35, 1];
+const EASE_CHEGADA: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const N = equipe.length;
 
 function offsetDe(ativo: number, i: number) {
@@ -27,9 +28,12 @@ type Props = {
 export default function CarrosselCapa({ reduzir, pronta, onAbrir }: Props) {
   const [ativo, setAtivo] = useState(0);
   const [pausado, setPausado] = useState(false);
+  const [revelar, setRevelar] = useState(false);
   const arrastando = useRef(false);
   const pularClique = useRef(false);
+  const chegando = useRef(true);
   const passo = useRef<(d: number) => void>(() => {});
+  const autoplay = useRef<number>(0);
 
   const ir = useCallback((d: number) => {
     setAtivo((a) => (a + d + N) % N);
@@ -38,10 +42,32 @@ export default function CarrosselCapa({ reduzir, pronta, onAbrir }: Props) {
   passo.current = ir;
 
   useEffect(() => {
-    if (reduzir || pausado || !pronta) return;
-    const t = window.setInterval(() => passo.current(1), 4000);
-    return () => window.clearInterval(t);
-  }, [reduzir, pausado, pronta]);
+    if (!pronta) {
+      setRevelar(false);
+      chegando.current = true;
+      return;
+    }
+    const mostrar = window.setTimeout(() => setRevelar(true), reduzir ? 0 : 180);
+    const soltar = window.setTimeout(() => {
+      chegando.current = false;
+    }, reduzir ? 280 : 1700);
+    return () => {
+      window.clearTimeout(mostrar);
+      window.clearTimeout(soltar);
+    };
+  }, [pronta, reduzir]);
+
+  useEffect(() => {
+    window.clearInterval(autoplay.current);
+    if (reduzir || pausado || !revelar) return;
+    const espera = window.setTimeout(() => {
+      autoplay.current = window.setInterval(() => passo.current(1), 4000);
+    }, chegando.current ? 1400 : 0);
+    return () => {
+      window.clearTimeout(espera);
+      window.clearInterval(autoplay.current);
+    };
+  }, [reduzir, pausado, revelar]);
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
@@ -76,7 +102,7 @@ export default function CarrosselCapa({ reduzir, pronta, onAbrir }: Props) {
       <div className="relative h-[min(52svh,26rem)] w-full max-w-[72rem] md:h-[48svh]">
         <motion.div
           className="absolute inset-0 cursor-grab active:cursor-grabbing"
-          drag={reduzir ? false : "x"}
+          drag={reduzir || !revelar ? false : "x"}
           dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.18}
           onDragStart={() => {
@@ -105,30 +131,46 @@ export default function CarrosselCapa({ reduzir, pronta, onAbrir }: Props) {
             const d = offsetDe(ativo, i);
             const visivel = Math.abs(d) <= 1;
             const centro = d === 0;
+            const entrada = chegando.current && revelar;
             return (
               <motion.button
                 key={p.id}
                 type="button"
-                disabled={!pronta}
-                aria-hidden={!visivel}
+                disabled={!revelar}
+                aria-hidden={!visivel || !revelar}
                 aria-label={`${p.nome}, ${SELO_AMBIENTE[p.ambiente]}`}
-                tabIndex={centro ? 0 : -1}
+                tabIndex={centro && revelar ? 0 : -1}
                 initial={false}
                 animate={{
                   x: `calc(-50% + ${d * 58}%)`,
-                  scale: centro ? 1 : 0.75,
-                  opacity: visivel ? (centro ? 1 : 0.6) : 0,
-                  filter: centro ? "grayscale(0%) brightness(1)" : "grayscale(70%) brightness(0.85)",
+                  y: revelar ? 0 : 64,
+                  scale: revelar ? (centro ? 1 : 0.75) : 0.9,
+                  opacity: revelar && visivel ? (centro ? 1 : 0.55) : 0,
+                  filter: !revelar
+                    ? "blur(10px) grayscale(25%) brightness(0.92)"
+                    : centro
+                      ? "blur(0px) grayscale(0%) brightness(1)"
+                      : "blur(0px) grayscale(70%) brightness(0.85)",
                   zIndex: centro ? 4 : visivel ? 2 : 0,
                 }}
-                transition={reduzir ? { duration: 0.3 } : { duration: 0.5, ease: EASE }}
+                transition={
+                  reduzir
+                    ? { duration: 0.3 }
+                    : entrada
+                      ? {
+                          duration: 1.15,
+                          delay: 0.06 + Math.abs(d) * 0.2,
+                          ease: EASE_CHEGADA,
+                        }
+                      : { duration: 0.5, ease: EASE }
+                }
                 onClick={() => {
                   if (pularClique.current) return;
                   if (centro) onAbrir(p);
                   else setAtivo(i);
                 }}
-                className="absolute left-1/2 top-0 h-full w-[min(72vw,20rem)] origin-center overflow-hidden rounded-[28px] text-left shadow-[0_18px_40px_rgb(0_0_0/0.28)] ring-1 ring-white/25"
-                style={{ pointerEvents: visivel ? "auto" : "none" }}
+                className="absolute left-1/2 top-0 h-full w-[min(72vw,20rem)] origin-bottom overflow-hidden rounded-[28px] text-left shadow-[0_18px_40px_rgb(0_0_0/0.28)] ring-1 ring-white/25"
+                style={{ pointerEvents: revelar && visivel ? "auto" : "none" }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -143,31 +185,43 @@ export default function CarrosselCapa({ reduzir, pronta, onAbrir }: Props) {
           })}
         </motion.div>
 
-        <button
+        <motion.button
           type="button"
           aria-label="Anterior"
           onClick={() => ir(-1)}
+          initial={false}
+          animate={{ opacity: revelar ? 1 : 0 }}
+          transition={{ duration: reduzir ? 0.3 : 0.7, delay: revelar ? 0.7 : 0, ease: EASE_CHEGADA }}
           className="absolute left-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/20 text-white/90 ring-1 ring-white/25 backdrop-blur-sm md:left-2 md:h-11 md:w-11 lg:left-6"
+          style={{ pointerEvents: revelar ? "auto" : "none" }}
         >
           <Seta dir="esq" />
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
           aria-label="Próxima"
           onClick={() => ir(1)}
+          initial={false}
+          animate={{ opacity: revelar ? 1 : 0 }}
+          transition={{ duration: reduzir ? 0.3 : 0.7, delay: revelar ? 0.7 : 0, ease: EASE_CHEGADA }}
           className="absolute right-1 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/20 text-white/90 ring-1 ring-white/25 backdrop-blur-sm md:right-2 md:h-11 md:w-11 lg:right-6"
+          style={{ pointerEvents: revelar ? "auto" : "none" }}
         >
           <Seta dir="dir" />
-        </button>
+        </motion.button>
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div
           key={pAtiva.id}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: pronta ? 1 : 0, y: 0 }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: revelar ? 1 : 0, y: revelar ? 0 : 12 }}
           exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: reduzir ? 0.3 : 0.35 }}
+          transition={{
+            duration: reduzir ? 0.3 : 0.85,
+            delay: revelar ? 0.42 : 0,
+            ease: EASE_CHEGADA,
+          }}
           className="mt-4 text-center"
         >
           <p className="text-[11px] uppercase tracking-[0.18em] text-white/80 [text-shadow:0_1px_8px_rgba(0,0,0,0.45)]">
@@ -179,7 +233,13 @@ export default function CarrosselCapa({ reduzir, pronta, onAbrir }: Props) {
         </motion.div>
       </AnimatePresence>
 
-      <div className="mt-4 flex items-center justify-center gap-2">
+      <motion.div
+        initial={false}
+        animate={{ opacity: revelar ? 1 : 0 }}
+        transition={{ duration: reduzir ? 0.3 : 0.7, delay: revelar ? 0.75 : 0, ease: EASE_CHEGADA }}
+        className="mt-4 flex items-center justify-center gap-2"
+        style={{ pointerEvents: revelar ? "auto" : "none" }}
+      >
         {equipe.map((p, i) => (
           <button
             key={p.id}
@@ -200,7 +260,7 @@ export default function CarrosselCapa({ reduzir, pronta, onAbrir }: Props) {
             </span>
           </button>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

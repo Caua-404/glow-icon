@@ -29,6 +29,7 @@ import Header from "./Header";
 import PainelEquipe from "./PainelEquipe";
 
 const EASE: [number, number, number, number] = [0.65, 0, 0.35, 1];
+const EASE_CHEGADA: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const FOCO_MEIO: FocoCamera = { x: 50, y: 50, zoom: 1 };
 const VINHETA =
   "linear-gradient(to bottom, rgb(0 0 0 / 0.52) 0%, rgb(0 0 0 / 0.18) 12%, transparent 25%, transparent 75%, rgb(0 0 0 / 0.22) 88%, rgb(0 0 0 / 0.5) 100%)";
@@ -84,7 +85,7 @@ export default function Equipe() {
   const escolhida = id ? profissionalPorId(id) : undefined;
   const introAtiva = intro !== "fim";
   const portasAbertas = intro !== "portas";
-  const capaPronta = intro !== "portas";
+  const capaPronta = intro === "fim";
 
   const px = useMotionValue(0);
   const py = useMotionValue(0);
@@ -123,11 +124,11 @@ export default function Equipe() {
       }, 300);
       return () => window.clearTimeout(fade);
     }
-    const abrir = window.setTimeout(() => setIntro("abrindo"), 300);
+    const abrir = window.setTimeout(() => setIntro("abrindo"), 400);
     const fim = window.setTimeout(() => {
       setIntro("fim");
       lembrarAbertura();
-    }, 2000);
+    }, 2200);
     return () => {
       window.clearTimeout(abrir);
       window.clearTimeout(fim);
@@ -266,7 +267,7 @@ export default function Equipe() {
 
   const cam = id
     ? transformFoco(foco)
-    : transformFoco(FOCO_MEIO, intro === "portas" ? 1.25 : 1);
+    : transformFoco(FOCO_MEIO, intro === "portas" ? 1.22 : 1);
   const camBlur =
     id && emMovimento && !reduce
       ? ["blur(0px)", "blur(2px)", "blur(0px)"]
@@ -290,30 +291,50 @@ export default function Equipe() {
         ref={raiz}
         onMouseMove={onMouse}
         onMouseLeave={resetParallax}
-        className="relative h-svh min-h-svh overflow-hidden bg-[#cbb9a8]"
+        className="relative h-svh min-h-svh overflow-hidden bg-[#c9b49c]"
         aria-label="Equipe"
       >
         <motion.div className="absolute inset-0 overflow-hidden will-change-transform" style={{ x: px, y: py }}>
-          <motion.div
-            className="absolute left-1/2 top-1/2 h-full w-max will-change-transform"
-            animate={{
-              x: cam.x,
-              y: cam.y,
-              scale: cam.scale,
-              originX: cam.originX,
-              originY: cam.originY,
-              filter: camBlur,
-            }}
-            transition={transicaoCam}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={FOTO_SALAO}
-              alt="Salão Glow Icon visto de frente, com as estações de unhas, cabelo, cílios e maquiagem."
-              className="pointer-events-none h-full w-auto max-w-none select-none"
-              draggable={false}
-            />
-          </motion.div>
+          {id ? (
+            <motion.div
+              className="absolute left-1/2 top-1/2 h-full w-max will-change-transform"
+              animate={{
+                x: cam.x,
+                y: cam.y,
+                scale: cam.scale,
+                originX: cam.originX,
+                originY: cam.originY,
+                filter: camBlur,
+              }}
+              transition={transicaoCam}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={FOTO_SALAO}
+                alt="Salão Glow Icon visto de frente, com as estações de unhas, cabelo, cílios e maquiagem."
+                className="pointer-events-none h-full w-auto max-w-none select-none"
+                draggable={false}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              className="absolute -inset-[22%] will-change-transform"
+              animate={{
+                scale: intro === "portas" ? 1.08 : 1,
+                filter: camBlur,
+              }}
+              transition={transicaoCam}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={FOTO_SALAO}
+                alt="Salão Glow Icon visto de frente, com as estações de unhas, cabelo, cílios e maquiagem."
+                draggable={false}
+                className="pointer-events-none absolute inset-0 size-full max-h-none max-w-none select-none"
+                style={{ objectFit: "cover", objectPosition: "center 48%" }}
+              />
+            </motion.div>
+          )}
         </motion.div>
 
         <AnimatePresence>
@@ -350,10 +371,14 @@ export default function Equipe() {
         <AnimatePresence>
           {!id && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: capaPronta ? 1 : 0 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: capaPronta ? 1 : 0, y: capaPronta ? 0 : 10 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: reduce ? 0.3 : 0.45 }}
+              transition={{
+                duration: reduce ? 0.3 : 0.9,
+                delay: reduce || !capaPronta ? 0 : 0.12,
+                ease: EASE_CHEGADA,
+              }}
               className="absolute inset-x-0 top-0 z-10 px-5 pt-16 md:px-8 md:pt-[4.5rem]"
             >
               <h1 className="titulo max-w-2xl text-[clamp(1.7rem,4.2vw,3.1rem)] font-light leading-[1.08] text-white [text-shadow:0_2px_18px_rgba(0,0,0,0.45)]">
@@ -363,15 +388,7 @@ export default function Equipe() {
           )}
         </AnimatePresence>
 
-        {!id && (
-          <motion.div
-            initial={false}
-            animate={{ opacity: capaPronta ? 1 : 0, y: capaPronta ? 0 : 28 }}
-            transition={{ duration: reduce ? 0.3 : 0.55, delay: reduce ? 0 : capaPronta ? 0.15 : 0, ease: EASE }}
-          >
-            <CarrosselCapa reduzir={reduce} pronta={intro === "fim"} onAbrir={(p) => void entrar(p)} />
-          </motion.div>
-        )}
+        {!id && <CarrosselCapa reduzir={reduce} pronta={capaPronta} onAbrir={(p) => void entrar(p)} />}
 
         {retratoOn && escolhida && (
           <motion.div
