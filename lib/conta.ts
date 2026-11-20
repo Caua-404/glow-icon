@@ -167,33 +167,33 @@ function demoVisitas(): Visita[] {
 
   return [
     v("demo-1", "2026-05-16", 9 * 60, 9 * 60 + 45, "sequencia", [
-      item("manicure", "ana-paula", 9 * 60, 9 * 60 + 45),
+      item("manicure", "eduarda-vieira", 9 * 60, 9 * 60 + 45),
     ]),
     v("demo-2", "2026-06-04", 14 * 60, 15 * 60, "simultaneo", [
-      item("tranca-lateral", "bianca", 14 * 60, 15 * 60),
-      item("design-sobrancelhas", "carla", 14 * 60, 14 * 60 + 20),
+      item("tranca-lateral", "larissa-moura", 14 * 60, 15 * 60),
+      item("design-sobrancelhas", "camila-rocha", 14 * 60, 14 * 60 + 20),
     ]),
     v("demo-3", "2026-06-21", 9 * 60, 10 * 60 + 30, "sequencia", [
-      item("esmaltacao-gel", "ana-paula", 9 * 60, 10 * 60 + 30),
+      item("esmaltacao-gel", "eduarda-vieira", 9 * 60, 10 * 60 + 30),
     ]),
     v("demo-4", "2026-07-11", 10 * 60, 11 * 60 + 30, "simultaneo", [
-      item("tranca-boxeadora", "bianca", 10 * 60, 11 * 60 + 30),
-      item("manicure", "ana-paula", 10 * 60, 10 * 60 + 45),
+      item("tranca-boxeadora", "larissa-moura", 10 * 60, 11 * 60 + 30),
+      item("manicure", "eduarda-vieira", 10 * 60, 10 * 60 + 45),
     ]),
     v("demo-5", "2026-08-08", 9 * 60, 11 * 60, "sequencia", [
-      item("cilios-volume-brasileiro", "carla", 9 * 60, 11 * 60),
+      item("cilios-volume-brasileiro", "camila-rocha", 9 * 60, 11 * 60),
     ]),
     v("demo-6", "2026-09-05", 13 * 60, 18 * 60, "sequencia", [
-      item("tranca-ghana", "bianca", 13 * 60, 17 * 60),
-      item("design-sobrancelhas", "duda", 17 * 60, 17 * 60 + 20),
+      item("tranca-ghana", "larissa-moura", 13 * 60, 17 * 60),
+      item("design-sobrancelhas", "camila-rocha", 17 * 60, 17 * 60 + 20),
     ]),
     v("demo-7", "2026-10-03", 9 * 60, 10 * 60 + 30, "sequencia", [
-      item("manicure", "ana-paula", 9 * 60, 9 * 60 + 45),
-      item("manicure-pe", "ana-paula", 9 * 60 + 45, 10 * 60 + 30),
+      item("manicure", "eduarda-vieira", 9 * 60, 9 * 60 + 45),
+      item("manicure-pe", "eduarda-vieira", 9 * 60 + 45, 10 * 60 + 30),
     ]),
     v("demo-8", "2026-10-24", 9 * 60, 10 * 60 + 30, "simultaneo", [
-      item("esmaltacao-gel", "ana-paula", 9 * 60, 10 * 60 + 30),
-      item("cilios-tufinho", "carla", 9 * 60, 9 * 60 + 45),
+      item("esmaltacao-gel", "eduarda-vieira", 9 * 60, 10 * 60 + 30),
+      item("cilios-tufinho", "camila-rocha", 9 * 60, 9 * 60 + 45),
     ]),
   ];
 }

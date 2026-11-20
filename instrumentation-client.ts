@@ -16,25 +16,5 @@ try {
   /* armazenamento bloqueado: segue o tema claro do HTML */
 }
 
-const reduzMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const forcarAbertura = /(?:\?|&)abertura=1(?:&|$)/.test(location.search);
-const naHome = location.pathname === "/" || location.pathname === "";
-
-let jaViuAbertura = false;
-try {
-  jaViuAbertura = !forcarAbertura && !!sessionStorage.getItem("glow-intro");
-} catch {
-  /* sessionStorage bloqueado: a abertura toca nesta visita */
-}
-
-if (!naHome || reduzMovimento || jaViuAbertura) {
-  html.setAttribute("data-intro", "skip");
-  html.classList.add("abertura-fim");
-} else {
-  html.setAttribute("data-intro", "wait");
-  window.setTimeout(() => {
-    if (html.getAttribute("data-intro") === "wait") {
-      html.setAttribute("data-intro", "play");
-    }
-  }, 1200);
-}
+html.setAttribute("data-intro", "skip");
+html.classList.add("abertura-fim");

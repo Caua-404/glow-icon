@@ -1,68 +1,68 @@
 "use client";
 
-import { useEffect } from "react";
-import { posicionamento } from "@/data/site";
+import { motion } from "framer-motion";
+import LogoSvg from "./LogoSvg";
 
-const FIM_MS = 2300;
+const EASE: [number, number, number, number] = [0.65, 0, 0.35, 1];
 
-function encerrar() {
-  const html = document.documentElement;
-  html.classList.add("abertura-fim");
-  try {
-    sessionStorage.setItem("glow-intro", "1");
-  } catch {
-    /* sem sessionStorage: a abertura toca de novo na próxima visita */
-  }
-}
+type Props = {
+  visivel: boolean;
+  abertas: boolean;
+  reduzir: boolean;
+  onPular: () => void;
+};
 
-/** Véu de papel na primeira visita: estrela, nome, e a folha sobe. */
-export default function Abertura() {
-  useEffect(() => {
-    const html = document.documentElement;
-    if (html.getAttribute("data-intro") === "skip") {
-      html.classList.add("abertura-fim");
-      return;
-    }
-
-    const pular = () => {
-      html.setAttribute("data-intro", "skip");
-      encerrar();
-    };
-
-    const tecla = (e: KeyboardEvent) => {
-      if (e.key === "Escape") pular();
-    };
-    window.addEventListener("keydown", tecla);
-
-    const fim = window.setTimeout(encerrar, FIM_MS);
-
-    return () => {
-      window.removeEventListener("keydown", tecla);
-      window.clearTimeout(fim);
-    };
-  }, []);
+export default function Abertura({ visivel, abertas, reduzir, onPular }: Props) {
+  if (!visivel) return null;
 
   return (
-    <div className="abertura" aria-hidden="true">
-      <div
-        className="abertura-folha ripado"
-        onClick={() => {
-          document.documentElement.setAttribute("data-intro", "skip");
-          encerrar();
-        }}
-      >
-        <div className="abertura-marca">
-          <svg className="abertura-estrela" viewBox="0 0 24 24">
-            <path
-              d="M12 0C12.96 7.2 16.8 11.04 24 12 16.8 12.96 12.96 16.8 12 24 11.04 16.8 7.2 12.96 0 12 7.2 11.04 11.04 7.2 12 0Z"
-              fill="var(--dourado)"
-            />
-          </svg>
-          <p className="abertura-nome titulo">Glow Icon</p>
-          <span className="abertura-risco" />
-          <p className="abertura-frase">{posicionamento}</p>
-        </div>
+    <div
+      className="fixed inset-0 z-[70] cursor-pointer overflow-hidden"
+      role="button"
+      tabIndex={0}
+      aria-label="Pular abertura"
+      onClick={onPular}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Escape") onPular();
+      }}
+    >
+      <div className="absolute inset-0" style={{ perspective: "1400px" }}>
+        <motion.div
+          className="porta-ripado porta-filete-dir absolute inset-y-0 left-0 w-1/2 origin-left"
+          initial={false}
+          animate={
+            reduzir
+              ? { opacity: abertas ? 0 : 1 }
+              : {
+                  x: abertas ? "-102%" : "0%",
+                  rotateY: abertas ? -25 : 0,
+                }
+          }
+          transition={reduzir ? { duration: 0.3 } : { duration: 1.1, ease: EASE }}
+        />
+        <motion.div
+          className="porta-ripado porta-filete-esq absolute inset-y-0 right-0 w-1/2 origin-right"
+          initial={false}
+          animate={
+            reduzir
+              ? { opacity: abertas ? 0 : 1 }
+              : {
+                  x: abertas ? "102%" : "0%",
+                  rotateY: abertas ? 25 : 0,
+                }
+          }
+          transition={reduzir ? { duration: 0.3 } : { duration: 1.1, ease: EASE }}
+        />
       </div>
+
+      <motion.div
+        className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+        initial={false}
+        animate={{ opacity: abertas || reduzir ? 0 : 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <LogoSvg className="h-5 w-auto text-[#f7f3ee] drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)] sm:h-6" />
+      </motion.div>
     </div>
   );
 }

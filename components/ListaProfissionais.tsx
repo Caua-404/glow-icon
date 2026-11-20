@@ -54,7 +54,7 @@ export default function ListaProfissionais({ servico, selecionada, onEscolher }:
                   alt={`${p.nome}, ${p.especialidade}`}
                   fill
                   sizes="(min-width: 640px) 260px, 45vw"
-                  className="object-cover"
+                  className="object-contain object-[center_12%]"
                 />
               </span>
 

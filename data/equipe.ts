@@ -1,6 +1,15 @@
 import type { Servico } from "./servicos";
 
-export type ProfissionalId = "ana-paula" | "bianca" | "carla" | "duda";
+export type ProfissionalId =
+  | "eduarda-vieira"
+  | "larissa-moura"
+  | "camila-rocha"
+  | "bianca-alves";
+
+export type AmbienteId = "unhas" | "cabelo" | "cilios" | "maquiagem";
+
+/** Ponto na panorâmica do salão: x/y em % da imagem, zoom da câmera. */
+export type FocoCamera = { x: number; y: number; zoom: number };
 
 /** 1 habilitada, 2 experiente, 3 especialista */
 export type Nivel = 1 | 2 | 3;
@@ -32,23 +41,41 @@ export type Profissional = {
   especialidade: string;
   frase: string;
   foto: string;
+  ambiente: AmbienteId;
+  foco: FocoCamera;
   /** três miniaturas de trabalhos */
   trabalhos: [string, string, string];
   especialidades: Especialidade[];
   avaliacoes: [Avaliacao, Avaliacao, Avaliacao];
 };
 
+export const FOTO_SALAO = "/img/ambientes/salao.png";
+
+export function fotoAmbiente(ambiente: AmbienteId): string {
+  return `/img/ambientes/${ambiente}.png`;
+}
+
+/** Selo da categoria na capa. */
+export const SELO_AMBIENTE: Record<AmbienteId, string> = {
+  unhas: "Unhas",
+  cabelo: "Cabelo",
+  cilios: "Cílios e Sobrancelhas",
+  maquiagem: "Maquiagem",
+};
+
 export const equipe: Profissional[] = [
   {
-    id: "ana-paula",
-    nome: "Ana Paula",
+    id: "eduarda-vieira",
+    nome: "Eduarda Vieira",
     especialidade: "Nail designer",
     frase: "Acabamento limpo e unhas que duram.",
-    foto: "/img/equipe/ana-paula.jpg",
+    foto: "/img/equipe/eduarda-vieira.png",
+    ambiente: "unhas",
+    foco: { x: 15, y: 55, zoom: 2.6 },
     trabalhos: [
-      "/img/equipe/ana-paula-unhas.jpg",
-      "/img/equipe/ana-paula-alongamento.jpg",
-      "/img/equipe/ana-paula-baby-boomer.jpg",
+      "/img/servicos/esmaltacao-gel.jpg",
+      "/img/servicos/fibra-vidro.jpg",
+      "/img/servicos/baby-boomer.jpg",
     ],
     especialidades: [
       {
@@ -83,15 +110,17 @@ export const equipe: Profissional[] = [
     ],
   },
   {
-    id: "bianca",
-    nome: "Bianca",
+    id: "larissa-moura",
+    nome: "Larissa Moura",
     especialidade: "Trancista",
     frase: "Tranças pensadas para o seu cabelo e o seu dia a dia.",
-    foto: "/img/equipe/bianca.jpg",
+    foto: "/img/equipe/larissa-moura.png",
+    ambiente: "cabelo",
+    foco: { x: 42, y: 52, zoom: 2.6 },
     trabalhos: [
-      "/img/equipe/bianca-boxeadora.jpg",
-      "/img/equipe/bianca-box-braids.jpg",
-      "/img/equipe/bianca-nago.jpg",
+      "/img/servicos/tranca-boxeadora.jpg",
+      "/img/servicos/tranca-box-braids.jpg",
+      "/img/servicos/tranca-nago-cabeca.jpg",
     ],
     especialidades: [
       {
@@ -125,15 +154,17 @@ export const equipe: Profissional[] = [
     ],
   },
   {
-    id: "carla",
-    nome: "Carla",
+    id: "camila-rocha",
+    nome: "Camila Rocha",
     especialidade: "Cílios e sobrancelhas",
     frase: "Olhar marcante sem exagero.",
-    foto: "/img/equipe/carla.jpg",
+    foto: "/img/equipe/camila-rocha.png",
+    ambiente: "cilios",
+    foco: { x: 70, y: 55, zoom: 2.6 },
     trabalhos: [
-      "/img/equipe/carla-fox.jpg",
-      "/img/equipe/carla-mega-volume.jpg",
-      "/img/equipe/carla-henna.jpg",
+      "/img/servicos/cilios-fox.jpg",
+      "/img/servicos/cilios-mega-volume.jpg",
+      "/img/servicos/sobrancelhas-henna.jpg",
     ],
     especialidades: [
       {
@@ -159,31 +190,61 @@ export const equipe: Profissional[] = [
     ],
   },
   {
-    id: "duda",
-    nome: "Duda",
-    especialidade: "Unhas e sobrancelhas",
-    frase: "Acabamento limpo nas unhas e no olhar.",
-    foto: "/img/equipe/duda.jpg",
+    id: "bianca-alves",
+    nome: "Bianca Alves",
+    especialidade: "Maquiadora",
+    frase: "Pele luminosa, para o dia ou para a festa.",
+    foto: "/img/equipe/bianca-alves.png",
+    ambiente: "maquiagem",
+    foco: { x: 94, y: 50, zoom: 2.2 },
     trabalhos: [
-      "/img/equipe/duda-gel.jpg",
-      "/img/equipe/duda-sobrancelha.jpg",
-      "/img/equipe/duda-tufinho.jpg",
+      "/img/servicos/maquiagem-social.jpg",
+      "/img/servicos/maquiagem-noiva.jpg",
+      "/img/servicos/design-sobrancelhas.jpg",
     ],
     especialidades: [
-      { nome: "Manicure e gel", nivel: 2, servicos: ["manicure", "manicure-pe", "esmaltacao-gel", "banho-gel", "esmaltacao-gel-pes"] },
-      { nome: "Sobrancelhas", nivel: 2, servicos: ["design-sobrancelhas", "sobrancelhas-henna", "buco"] },
-      { nome: "Cílios tufinho", nivel: 1, servicos: ["cilios-tufinho"] },
+      {
+        nome: "Maquiagem",
+        nivel: 3,
+        servicos: ["maquiagem-social", "maquiagem-noiva"],
+      },
     ],
     avaliacoes: [
-      { nome: "Aline T.", data: "2026-10-27", nota: 5, comentario: "A esmaltação em gel durou três semanas e combinou com o que eu pedi." },
-      { nome: "Gabriela N.", data: "2026-10-05", nota: 4, comentario: "O design da sobrancelha ficou no tom que combinamos. Demorou um pouco mais que o previsto." },
-      { nome: "Isabela F.", data: "2026-09-21", nota: 5, comentario: "Adorei o tufinho: ficou leve e as fotos saíram ótimas." },
+      { nome: "Helena V.", data: "2026-10-28", nota: 5, comentario: "Maquiagem de formatura que durou a festa toda. Pele bonita nas fotos e ao vivo." },
+      { nome: "Priscila N.", data: "2026-10-08", nota: 5, comentario: "Ficou no estilo que pedi, sem pesar. Pontual e atenciosa." },
+      { nome: "Amanda K.", data: "2026-09-16", nota: 4, comentario: "A maquiagem de noiva ficou linda. Só achei o tempo um pouco justo no dia." },
     ],
   },
 ];
 
 export function profissionalPorId(id: string): Profissional | undefined {
   return equipe.find((p) => p.id === id);
+}
+
+export function indiceProfissional(id: ProfissionalId): number {
+  return equipe.findIndex((p) => p.id === id);
+}
+
+/** Loop: +1 próxima, -1 anterior. */
+export function profissionalAdjacente(id: ProfissionalId, delta: number): Profissional {
+  const i = indiceProfissional(id);
+  const n = equipe.length;
+  return equipe[(i + delta + n * 8) % n];
+}
+
+/**
+ * A foto é mais larga que a tela (left 50% + top 50%).
+ * translate(-x%, -y%) coloca o ponto no centro; o zoom nasce nele.
+ * Sem clamp: x>85 chega na penteadeira, não fica preso no meio do recorte.
+ */
+export function transformFoco(foco: FocoCamera, zoom = foco.zoom) {
+  return {
+    x: `${-foco.x}%`,
+    y: `${-foco.y}%`,
+    scale: zoom,
+    originX: foco.x / 100,
+    originY: foco.y / 100,
+  };
 }
 
 /** Média das avaliações, com uma casa decimal. */

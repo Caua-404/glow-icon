@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
-import Abertura from "@/components/Abertura";
 import Providers from "@/components/Providers";
 
 const cormorant = Cormorant_Garamond({
@@ -62,6 +61,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F7F3EE" },
     { media: "(prefers-color-scheme: dark)", color: "#17120E" },
@@ -78,7 +78,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <Providers>{children}</Providers>
-        <Abertura />
       </body>
     </html>
   );
