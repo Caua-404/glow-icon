@@ -44,10 +44,10 @@ export const metadata: Metadata = {
     description: descricao,
     images: [
       {
-        url: "/og.jpg",
+        url: "/og.jpg?v=equipe",
         width: 1200,
         height: 630,
-        alt: "Glow Icon — Eduarda Vieira, unhas com assinatura. Canaã dos Carajás - PA.",
+        alt: "Glow Icon — Eduarda, Larissa, Camila e Bianca. Unhas com assinatura em Canaã dos Carajás - PA.",
         type: "image/jpeg",
       },
     ],
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Glow Icon — unhas com assinatura",
     description: descricao,
-    images: ["/og.jpg"],
+    images: ["/og.jpg?v=equipe"],
   },
 };
 

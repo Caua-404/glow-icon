@@ -2,10 +2,10 @@
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
-FOTO = ROOT / "public" / "img" / "eduarda.png"
+EQUIPE = ROOT / "public" / "img" / "equipe"
 OUT = ROOT / "public" / "og.jpg"
 FONTS = Path(r"C:\Windows\Fonts")
 
@@ -16,7 +16,12 @@ SUAVE = (122, 106, 92)
 DOURADO = (184, 146, 90)
 MADEIRA = (160, 122, 85)
 
-PHOTO_W, PHOTO_H = 400, 560
+FOTOS = [
+    ("eduarda-vieira.png", "Eduarda"),
+    ("larissa-moura.png", "Larissa"),
+    ("camila-rocha.png", "Camila"),
+    ("bianca-alves.png", "Bianca"),
+]
 
 
 def font(name: str, size: int) -> ImageFont.FreeTypeFont:
@@ -34,56 +39,88 @@ def sparkle(draw: ImageDraw.ImageDraw, cx: float, cy: float, r: float) -> None:
     draw.polygon(pts, fill=DOURADO)
 
 
-def crop_cover(src: Image.Image, tw: int, th: int) -> Image.Image:
-    scale = max(tw / src.width, th / src.height)
-    nw, nh = int(src.width * scale), int(src.height * scale)
-    src = src.resize((nw, nh), Image.Resampling.LANCZOS)
-    left = (nw - tw) // 2
-    top = max(0, int((nh - th) * 0.12))
-    return src.crop((left, top, left + tw, top + th))
-
-
-def arch_mask(w: int, h: int) -> Image.Image:
-    mask = Image.new("L", (w, h), 0)
-    d = ImageDraw.Draw(mask)
-    r = w / 2
-    d.pieslice((0, 0, w - 1, w - 1), 180, 360, fill=255)
-    d.rectangle((0, int(r) - 1, w, h), fill=255)
-    return mask
+def recorte(src: Image.Image, altura: int) -> Image.Image:
+    bbox = src.getchannel("A").getbbox()
+    if not bbox:
+        return src
+    pad = 12
+    x0, y0, x1, y1 = bbox
+    src = src.crop(
+        (
+            max(0, x0 - pad),
+            max(0, y0 - pad),
+            min(src.width, x1 + pad),
+            min(src.height, y1 + pad),
+        )
+    )
+    escala = altura / src.height
+    nw, nh = max(1, int(src.width * escala)), altura
+    return src.resize((nw, nh), Image.Resampling.LANCZOS)
 
 
 def main() -> None:
-    canvas = Image.new("RGB", (W, H), FUNDO)
-    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    od = ImageDraw.Draw(overlay)
+    canvas = Image.new("RGBA", (W, H), (*FUNDO, 255))
+    listras = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(listras)
     for x in range(0, W, 16):
-        od.line([(x, 0), (x, H)], fill=(*MADEIRA, 16), width=1)
-    canvas = Image.alpha_composite(canvas.convert("RGBA"), overlay).convert("RGB")
+        ld.line([(x, 0), (x, H)], fill=(*MADEIRA, 16), width=1)
+    canvas = Image.alpha_composite(canvas, listras)
+
+    vinheta = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    vd = ImageDraw.Draw(vinheta)
+    vd.rectangle((0, 0, W, 70), fill=(42, 32, 25, 18))
+    vd.rectangle((0, H - 90, W, H), fill=(42, 32, 25, 22))
+    canvas = Image.alpha_composite(canvas, vinheta.filter(ImageFilter.GaussianBlur(18)))
+
+    pessoas: list[tuple[Image.Image, str]] = []
+    for arquivo, nome in FOTOS:
+        im = Image.open(EQUIPE / arquivo).convert("RGBA")
+        pessoas.append((recorte(im, 560), nome))
+
+    faixa = 900
+    x0 = 268
+    n = len(pessoas)
+    passo = faixa / n
+    bases: list[int] = []
+    for i, (foto, _) in enumerate(pessoas):
+        x = int(x0 + i * passo - 24)
+        y = H - foto.height + 22
+        bases.append(x + foto.width // 2)
+        sombra = Image.new("RGBA", (foto.width, 48), (0, 0, 0, 0))
+        sd = ImageDraw.Draw(sombra)
+        sd.ellipse((24, 8, foto.width - 24, 44), fill=(42, 32, 25, 42))
+        sombra = sombra.filter(ImageFilter.GaussianBlur(10))
+        canvas.alpha_composite(sombra, (x, H - 50))
+        canvas.alpha_composite(foto, (x, y))
+
     draw = ImageDraw.Draw(canvas)
+    sparkle(draw, 78, 118, 15)
 
-    foto = crop_cover(Image.open(FOTO).convert("RGB"), PHOTO_W, PHOTO_H)
-    mask = arch_mask(PHOTO_W, PHOTO_H)
-    px, py = W - PHOTO_W - 64, (H - PHOTO_H) // 2
+    display = font("constan.ttf", 58)
+    italic = font("constani.ttf", 28)
+    small = font("constan.ttf", 20)
+    mini = font("constan.ttf", 17)
 
-    frame_mask = arch_mask(PHOTO_W + 8, PHOTO_H + 8)
-    gold = Image.new("RGB", (PHOTO_W + 8, PHOTO_H + 8), DOURADO)
-    canvas.paste(gold, (px - 4, py - 4), frame_mask)
-    canvas.paste(foto, (px, py), mask)
+    draw.text((64, 150), "Glow Icon", font=display, fill=TINTA)
+    draw.text((64, 222), "Unhas com assinatura.", font=italic, fill=TINTA)
+    draw.line((64, 278, 300, 278), fill=DOURADO, width=2)
+    draw.text((64, 304), "Canaã dos Carajás - PA", font=small, fill=SUAVE)
 
-    sparkle(draw, 88, 168, 18)
-
-    display = font("constan.ttf", 72)
-    italic = font("constani.ttf", 36)
-    small = font("constan.ttf", 22)
-
-    draw.text((72, 210), "Glow Icon", font=display, fill=TINTA)
-    draw.text((72, 300), "Unhas com assinatura.", font=italic, fill=TINTA)
-    draw.line((72, 372, 320, 372), fill=DOURADO, width=2)
-    draw.text((72, 400), "Eduarda Vieira", font=small, fill=SUAVE)
-    draw.text((72, 436), "Canaã dos Carajás - PA", font=small, fill=SUAVE)
+    for cx, (_, nome) in zip(bases, pessoas):
+        caixa = draw.textbbox((0, 0), nome, font=mini)
+        tw = caixa[2] - caixa[0]
+        th = caixa[3] - caixa[1]
+        nx = int(cx - tw / 2)
+        ny = H - 38
+        draw.rounded_rectangle(
+            (nx - 10, ny - 5, nx + tw + 10, ny + th + 5),
+            radius=11,
+            fill=FUNDO,
+        )
+        draw.text((nx, ny), nome, font=mini, fill=TINTA)
 
     OUT.parent.mkdir(exist_ok=True)
-    canvas.convert("RGB").save(OUT, "JPEG", quality=88, optimize=True, progressive=True)
+    canvas.convert("RGB").save(OUT, "JPEG", quality=90, optimize=True, progressive=True)
     print(f"wrote {OUT} ({OUT.stat().st_size // 1024} KB)")
 
 
